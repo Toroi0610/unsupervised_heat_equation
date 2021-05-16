@@ -1,0 +1,20 @@
+learning_params:
+    alpha_d:
+        1
+    alpha_b:
+        1
+
+simulation_params:
+    kappa:
+        0.01
+    x_h:
+        4
+    y_h:
+        8
+    dx:
+        0.01
+    dy:
+        0.01
+    T_0:
+        1
+
