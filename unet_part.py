@@ -5,8 +5,24 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, Activation, BatchNormalization, Dropout, Flatten, Dense
 
-from utils import convert_array_to_tensor, convert_tensor_to_array, getflow
+from utils import convert_array_to_tensor, convert_tensor_to_array
 
+@tf.function
+def get2orderderivative(temp_field, config):
+    dx = config["simulation_params"]["dx"]
+    dy = config["simulation_params"]["dy"]
+    du2_dx2 = (temp_field[2:, 1:-1] - temp_field[1:-1, 1:-1] + temp_field[:-2, 1:-1]) / (dx*dx)
+    du2_dy2 = (temp_field[1:-1, 2:] - temp_field[1:-1, 1:-1] + temp_field[1:-1, :-2]) / (dy*dy)
+    return du2_dx2, du2_dy2
+
+@tf.function
+def getflow(temp_field, config):
+    kappa = config["simulation_params"]["kappa"]
+    du2_dx2, du2_dy2 = get2orderderivative(temp_field, config)
+    return kappa * (du2_dx2 + du2_dy2)
+
+
+@tf.function
 def PCL(u_new, u_old, config):
    
     # Todo : Adapt to Batch
@@ -28,6 +44,9 @@ def PCL(u_new, u_old, config):
 class UNet(Model):
     def __init__(self, config):
         super().__init__()
+
+        self.config = config
+
         # Network
         self.enc = Encoder(config)
         self.dec = Decoder(config)
@@ -46,11 +65,13 @@ class UNet(Model):
 
         return y
 
-    def unsupervised_training(self, init_temp, epochs=200):
+    def unsupervised_training(self, init_temp):
         
+        config = self.config
+
         temp_field_old = init_temp
 
-        for epoch in range(epochs):
+        for epoch in range(config["learning_params"]["epochs"]):
             print("\nStart of epoch %d" % (epoch,))
             
             # Create Batch Dataset
@@ -67,6 +88,8 @@ class UNet(Model):
 
                 # Compute the loss value for this minibatch.
                 loss_value = self.loss_object(temp_field_new, temp_field_old)
+                
+                temp_field_old = temp_field_new
 
             # Use the gradient tape to automatically retrieve
             # the gradients of the trainable variables with respect to the loss.
@@ -82,8 +105,7 @@ class UNet(Model):
                     "Training loss (for one batch) at epoch %d: %.4f"
                     % (epoch, float(loss_value))
                 )
-        
-        
+
     @tf.function
     def train_step(self, x, t):
         # x == t

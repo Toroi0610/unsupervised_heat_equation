@@ -3,6 +3,10 @@ learning_params:
         1
     alpha_b:
         1
+    epochs:
+        1000
+    batch_size:
+        500
 
 simulation_params:
     kappa:
