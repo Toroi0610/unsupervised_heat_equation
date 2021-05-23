@@ -1,0 +1,31 @@
+learning_params:
+    alpha_x:
+        0.4
+    alpha_y:
+        0.3
+    alpha_z:
+        0.5
+    epochs:
+        1000
+    batch_size:
+        500
+    make_batch:
+        True
+    trajectory_visualize:
+        True
+
+simulation_params:
+    sigma:
+        10
+    rho:
+        28
+    beta:
+        2.6666666666666665
+    x_init:
+        0
+    y_init:
+        4
+    z_init:
+        28
+    dt:
+        0.001
